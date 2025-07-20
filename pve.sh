@@ -65,7 +65,6 @@ if pveversion | grep -qE "pve-manager/[0-9]+\.[0-9]+\.[0-9]+~"; then
         echo "Proxmox VE 베타/테스트 버전이 감지되었습니다. pve-test 저장소를 사용합니다."
     fi
 fi
-fi
 
 
 # Debian 13 (trixie) 이상 버전에서 DEB822 형식 사용 여부 결정
