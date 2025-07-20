@@ -13,12 +13,19 @@ REPO_PATH="/etc/yum.repos.d/almalinux.repo"
 BACKUP_PATH="${REPO_PATH}.bak.$(date +%Y%m%d%H%M%S)"
 KEY="file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-${VERSION_ID%%.*}"
 
+
 # 버전별 URL 설정
 if [ "${VERSION_ID%%.*}" = "10" ]; then
     BASE_URL="https://http.krfoss.org/almalinux-kitten/10-kitten"
 else
     BASE_URL="https://http.krfoss.org/almalinux/\$releasever"
 fi
+
+# 기존 repo 파일 백업
+for f in /etc/yum.repos.d/*.repo; do
+    [ -e "$f" ] && cp "$f" "${f}.bak.$(date +%Y%m%d)"
+    echo "기존 repo 파일을 백업했습니다: ${f}.bak.$(date +%Y%m%d)"
+done
 
 rm -f /etc/yum.repos.d/*.repo
 

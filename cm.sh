@@ -54,7 +54,7 @@ elif [ "$DISTRO" = "debian" ]; then
 fi
 
 # 기존 파일 백업 디렉토리 생성
-mkdir -p /etc/apt/backup
+mkdir -p /etc/apt
 
 if [ "$USE_DEB822_FORMAT" = true ]; then
     # DEB822 형식 (ubuntu.sources 또는 debian.sources) 사용
@@ -79,13 +79,13 @@ if [ "$USE_DEB822_FORMAT" = true ]; then
 
     if [ "$USE_DEB822_FORMAT" = true ]; then # 다시 한번 확인
         if [ -f "$SOURCE_FILE" ]; then
-            BACKUP_PATH="/etc/apt/backup/$BACKUP_FILENAME.bak.$(date +%Y%m%d)"
+            BACKUP_PATH="/etc/apt/$BACKUP_FILENAME.bak.$(date +%Y%m%d)"
             cp "$SOURCE_FILE" "$BACKUP_PATH"
             echo "기존 $SOURCE_FILE을 $BACKUP_PATH로 백업했습니다."
         
             # 혹시 있을 수 있는 legacy sources.list도 백업하고 비활성화
             if [ -f /etc/apt/sources.list ]; then
-                cp /etc/apt/sources.list /etc/apt/backup/sources.list.bak.$(date +%Y%m%d)
+                cp /etc/apt/sources.list /etc/apt/sources.list.bak.$(date +%Y%m%d)
                 echo "# 이 파일은 비활성화되었습니다. DEB822 형식이 $SOURCE_FILE에 사용됨" > /etc/apt/sources.list
             fi
         else
@@ -115,7 +115,7 @@ else
     echo "sources.list 파일을 ROKFOSS 미러 주소로 변경합니다..."
     
     # 기존 파일 백업
-    BACKUP_FILE="/etc/apt/backup/sources.list.bak.$(date +%Y%m%d)"
+    BACKUP_FILE="/etc/apt/sources.list.bak.$(date +%Y%m%d)"
     cp /etc/apt/sources.list "$BACKUP_FILE"
     echo "기존 sources.list를 $BACKUP_FILE로 백업했습니다."
     
