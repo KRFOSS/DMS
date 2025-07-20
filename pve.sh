@@ -57,10 +57,13 @@ fi
 
 # Proxmox VE 버전이 베타/테스트 버전인지 확인 (예: 9.0.0~8)
 IS_PVE_BETA=false
-if pveversion | grep -q "~"; then
+# pve-manager 버전 문자열에 '~'가 포함되어 있는지 정확히 확인합니다.
+# 'pve-manager/숫자.숫자.숫자~' 패턴을 찾습니다.
+if pveversion | grep -qE "pve-manager/[0-9]+\.[0-9]+\.[0-9]+~"; then
     IS_PVE_BETA=true
     echo "Proxmox VE 베타/테스트 버전이 감지되었습니다. pve-test 저장소를 사용합니다."
 fi
+
 
 # Debian 13 (trixie) 이상 버전에서 DEB822 형식 사용 여부 결정
 USE_DEB822_FORMAT=false
