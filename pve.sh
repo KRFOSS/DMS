@@ -66,7 +66,6 @@ if pveversion | grep -qE "pve-manager/[0-9]+\.[0-9]+\.[0-9]+~"; then
     fi
 fi
 
-
 # Debian 13 (trixie) 이상 버전에서 DEB822 형식 사용 여부 결정
 USE_DEB822_FORMAT=false
 if [[ "$codename" == "trixie" || "$codename" > "trixie" ]]; then
