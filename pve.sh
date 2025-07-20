@@ -156,6 +156,7 @@ EOF
     CEPH_COMPONENTS="no-subscription"
     if [ "$IS_PVE_BETA" = true ]; then
         CEPH_COMPONENTS="test"
+        echo "Proxmox VE 베타/테스트 버전이 감지되어 Ceph 저장소도 테스트 버전으로 설정합니다."
     fi
 
     # ceph_version이 quincy가 아닐 때만 해당 Ceph 리포지토리 추가
