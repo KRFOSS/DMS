@@ -57,7 +57,7 @@ fi
 
 # Proxmox VE 버전이 베타/테스트 버전인지 확인 (예: 9.0.0~8)
 IS_PVE_BETA=false
-if pveversion -v | grep -q "~"; then
+if pveversion | grep -q "~"; then
     IS_PVE_BETA=true
     echo "Proxmox VE 베타/테스트 버전이 감지되었습니다. pve-test 저장소를 사용합니다."
 fi
