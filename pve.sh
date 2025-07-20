@@ -102,7 +102,7 @@ if [ "$USE_DEB822_FORMAT" = true ]; then
     echo "기존 .list 및 .sources 저장소 파일을 백업하고 제거합니다..."
     for file in /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
         if [ -f "$file" ]; then
-            BACKUP_LIST_FILE="/etc/apt/$(basename "$file").bak.$(date +%Y%m%d)"
+            BACKUP_LIST_FILE="/etc/apt/sources.list.d/$(basename "$file").bak.$(date +%Y%m%d)"
             cp "$file" "$BACKUP_LIST_FILE"
             echo "✓ $(basename "$file") 파일을 백업했습니다: $BACKUP_LIST_FILE"
             rm "$file"
