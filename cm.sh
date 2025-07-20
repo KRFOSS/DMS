@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # 우분투/데비안/칼리 미러 소스 변경 스크립트
-# v 1.0.1
+# v 1.0.2 - 데비안 'trixie' 버전부터 DEB822 형식 지원 추가
 
 # 루트 권한 확인
 if [ "$(id -u)" != "0" ]; then
-   echo "이 스크립트는 루트 권한으로 실행해야 합니다." 1>&2
-   exit 1
+    echo "이 스크립트는 루트 권한으로 실행해야 합니다." 1>&2
+    exit 1
 fi
 
 # 배포판 타입 확인 (Ubuntu, Debian 또는 Kali)
@@ -37,7 +37,7 @@ fi
 
 echo "$DISTRO 버전: $CODENAME을(를) 인식했습니다."
 
-# Ubuntu 24.04(noble) 이상 버전 확인
+# Ubuntu 24.04(noble) 이상 또는 Debian 13(trixie) 이상 버전 확인
 USE_DEB822_FORMAT=false
 if [ "$DISTRO" = "ubuntu" ]; then
     # Noble(24.04) 이상 버전에서는 DEB822 형식 사용
@@ -45,60 +45,71 @@ if [ "$DISTRO" = "ubuntu" ]; then
         USE_DEB822_FORMAT=true
         echo "Ubuntu $CODENAME 감지: DEB822 형식 사용"
     fi
+elif [ "$DISTRO" = "debian" ]; then
+    # Trixie(13) 이상 버전에서는 DEB822 형식 사용
+    if [[ "$CODENAME" == "trixie" || "$CODENAME" > "trixie" ]]; then
+        USE_DEB822_FORMAT=true
+        echo "Debian $CODENAME 감지: DEB822 형식 사용"
+    fi
 fi
 
 # 기존 파일 백업 디렉토리 생성
 mkdir -p /etc/apt/backup
 
 if [ "$USE_DEB822_FORMAT" = true ]; then
-    # DEB822 형식 (ubuntu.sources) 사용
-    if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
-        BACKUP_FILE="/etc/apt/backup/ubuntu.sources.bak.$(date +%Y%m%d)"
-        cp /etc/apt/sources.list.d/ubuntu.sources "$BACKUP_FILE"
-        echo "기존 ubuntu.sources를 $BACKUP_FILE로 백업했습니다."
+    # DEB822 형식 (ubuntu.sources 또는 debian.sources) 사용
+    if [ "$DISTRO" = "ubuntu" ]; then
+        SOURCE_FILE="/etc/apt/sources.list.d/ubuntu.sources"
+        BACKUP_FILENAME="ubuntu.sources"
+        KEYRING="/usr/share/keyrings/ubuntu-archive-keyring.gpg"
+        MIRROR_URI="https://http.krfoss.org/ubuntu/"
+        COMPONENTS="main restricted universe multiverse"
+    elif [ "$DISTRO" = "debian" ]; then
+        SOURCE_FILE="/etc/apt/sources.list.d/debian.sources"
+        BACKUP_FILENAME="debian.sources"
+        KEYRING="/usr/share/keyrings/debian-archive-keyring.gpg"
+        MIRROR_URI="https://http.krfoss.org/debian/"
+        COMPONENTS="main contrib non-free non-free-firmware"
+    else
+        # DEB822 형식을 사용하지 않는 배포판의 경우 (예: Kali)
+        # 이 부분은 실행되지 않겠지만, 혹시 모를 상황에 대비
+        echo "경고: 현재 배포판($DISTRO)은 DEB822 형식을 지원하지 않습니다. Legacy 형식으로 진행합니다."
+        USE_DEB822_FORMAT=false # 다시 false로 설정하여 아래 legacy 로직으로 이동
+    fi
+
+    if [ "$USE_DEB822_FORMAT" = true ]; then # 다시 한번 확인
+        if [ -f "$SOURCE_FILE" ]; then
+            BACKUP_PATH="/etc/apt/backup/$BACKUP_FILENAME.bak.$(date +%Y%m%d)"
+            cp "$SOURCE_FILE" "$BACKUP_PATH"
+            echo "기존 $SOURCE_FILE을 $BACKUP_PATH로 백업했습니다."
         
-        # 혹시 있을 수 있는 legacy sources.list도 백업하고 비활성화
-        if [ -f /etc/apt/sources.list ]; then
-            cp /etc/apt/sources.list /etc/apt/backup/sources.list.bak.$(date +%Y%m%d)
-            echo "# 이 파일은 비활성화되었습니다. DEB822 형식이 /etc/apt/sources.list.d/ubuntu.sources에 사용됨" > /etc/apt/sources.list
+            # 혹시 있을 수 있는 legacy sources.list도 백업하고 비활성화
+            if [ -f /etc/apt/sources.list ]; then
+                cp /etc/apt/sources.list /etc/apt/backup/sources.list.bak.$(date +%Y%m%d)
+                echo "# 이 파일은 비활성화되었습니다. DEB822 형식이 $SOURCE_FILE에 사용됨" > /etc/apt/sources.list
+            fi
+        else
+            echo "경고: $SOURCE_FILE 파일을 찾을 수 없습니다."
+            echo "DEB822 형식으로 새로 생성합니다."
+            mkdir -p /etc/apt/sources.list.d
         fi
         
-        # Ubuntu용 DEB822 형식 sources 파일 생성
-        cat > /etc/apt/sources.list.d/ubuntu.sources << EOF
+        # DEB822 형식 sources 파일 생성
+        cat > "$SOURCE_FILE" << EOF
 Types: deb deb-src
-URIs: https://http.krfoss.org/ubuntu/
+URIs: $MIRROR_URI
 Suites: $CODENAME $CODENAME-updates $CODENAME-backports
-Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Components: $COMPONENTS
+Signed-By: $KEYRING
 
 Types: deb deb-src
-URIs: https://http.krfoss.org/ubuntu/
+URIs: $MIRROR_URI
 Suites: $CODENAME-security
-Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Components: $COMPONENTS
+Signed-By: $KEYRING
 EOF
-    else
-        echo "경고: /etc/apt/sources.list.d/ubuntu.sources 파일을 찾을 수 없습니다."
-        echo "DEB822 형식으로 새로 생성합니다."
-        
-        # Ubuntu용 DEB822 형식 sources 파일 생성
-        mkdir -p /etc/apt/sources.list.d
-        cat > /etc/apt/sources.list.d/ubuntu.sources << EOF
-Types: deb deb-src
-URIs: https://http.krfoss.org/ubuntu/
-Suites: $CODENAME $CODENAME-updates $CODENAME-backports
-Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-Types: deb deb-src
-URIs: https://http.krfoss.org/ubuntu/
-Suites: $CODENAME-security
-Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-EOF
+        echo "✓ $SOURCE_FILE 파일이 성공적으로 변경되었습니다."
     fi
-    
-    echo "✓ ubuntu.sources 파일이 성공적으로 변경되었습니다."
 else
     # 기존 Legacy 형식 사용
     echo "sources.list 파일을 ROKFOSS 미러 주소로 변경합니다..."
@@ -144,6 +155,7 @@ EOF
     
     else
         # 데비안 버전에 따른 컴포넌트 설정
+        # trixie 이상 버전은 이미 DEB822 형식으로 처리되므로, 여기서는 이전 버전만 해당
         if [[ "$CODENAME" == "bookworm" || "$CODENAME" == "trixie" || "$CODENAME" == "sid" || "$CODENAME" > "bookworm" ]]; then
             COMPONENTS="main contrib non-free non-free-firmware"
         else
