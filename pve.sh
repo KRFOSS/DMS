@@ -75,8 +75,8 @@ for file in /etc/apt/sources.list.d/*.list; do
         echo "✓ $(basename $file) 파일을 백업했습니다: ${file}.bak"
         
         # 미러 주소 변경
-        sed -i 's|https\?://[^/]*/debian|https://http.krfoss.org/debian|g' "$file"
         sed -i 's|https\?://[^/]*/proxmox|https://http.krfoss.org/proxmox|g' "$file"
+        sed -i 's|https\?://[^/]*/debian|https://http.krfoss.org/debian|g' "$file"
         sed -i 's|https\?://[^/]*/debian-security|https://http.krfoss.org/debian-security|g' "$file"
         
         echo "✓ $(basename $file) 파일이 ROKFOSS 미러로 업데이트되었습니다."
