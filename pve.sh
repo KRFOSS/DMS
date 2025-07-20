@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Proxmox VE 미러 소스 변경 스크립트
-# v 1.0.4 - Debian 'trixie' (Proxmox VE 9.x) 버전부터 DEB822 형식 지원 강화
-#         - Debian, Proxmox VE, Ceph 저장소를 각각 별도의 .sources 파일로 분리
-#         - Proxmox VE 베타 버전 (예: 9.0.0~8)에 대한 pve-test 저장소 처리 추가
-
 # 스크립트가 파이프 방식으로 실행되는지 확인
 is_piped=0
 if [ ! -t 0 ]; then
