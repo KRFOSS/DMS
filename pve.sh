@@ -106,7 +106,7 @@ if [ "$USE_DEB822_FORMAT" = true ]; then
     echo "기존 .list 및 .sources 저장소 파일을 백업하고 제거합니다..."
     for file in /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
         if [ -f "$file" ]; then
-            BACKUP_LIST_FILE="/etc/apt/sources.list.d/$(basename "$file").bak.$(date +%Y%m%d)"
+            BACKUP_LIST_FILE="/etc/apt/sources.list.d/.$(basename "$file").bak.$(date +%Y%m%d)"
             cp "$file" "$BACKUP_LIST_FILE"
             echo "✓ $(basename "$file") 파일을 백업했습니다: $BACKUP_LIST_FILE"
             rm "$file"
@@ -173,7 +173,7 @@ else
     echo "Legacy 형식으로 sources.list 파일을 ROKFOSS 미러 주소로 변경합니다..."
 
     # 기존 sources.list 백업
-    BACKUP_FILE="/etc/apt/sources.list.bak.$(date +%Y%m%d)"
+    BACKUP_FILE="/etc/apt/.sources.list.bak.$(date +%Y%m%d)"
     cp /etc/apt/sources.list "$BACKUP_FILE"
     echo "기존 sources.list를 $BACKUP_FILE로 백업했습니다."
 

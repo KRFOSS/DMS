@@ -60,7 +60,7 @@ if [ "$USE_DEB822_FORMAT" = true ]; then
 
     # 기존 sources.list 백업 및 비활성화
     if [ -f /etc/apt/sources.list ]; then
-        cp /etc/apt/sources.list /etc/apt/sources.list.bak.$(date +%Y%m%d)
+        cp /etc/apt/sources.list /etc/apt/.sources.list.bak.$(date +%Y%m%d)
         echo "# 이 파일은 비활성화되었습니다. DEB822 형식이 /etc/apt/sources.list.d/ 에 사용됨" > /etc/apt/sources.list
         echo "기존 /etc/apt/sources.list를 백업하고 비활성화했습니다."
     fi
@@ -69,7 +69,7 @@ if [ "$USE_DEB822_FORMAT" = true ]; then
     echo "기존 .list 및 .sources 저장소 파일을 백업하고 제거합니다..."
     for file in /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
         if [ -f "$file" ]; then
-            BACKUP_LIST_FILE="/etc/apt/$(basename "$file").bak.$(date +%Y%m%d)"
+            BACKUP_LIST_FILE="/etc/apt/sources.list.d/.$(basename "$file").bak.$(date +%Y%m%d)"
             cp "$file" "$BACKUP_LIST_FILE"
             echo "✓ $(basename "$file") 파일을 백업했습니다: $BACKUP_LIST_FILE"
             rm "$file"

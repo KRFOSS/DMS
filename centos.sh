@@ -20,7 +20,7 @@ REPO_PATH="/etc/yum.repos.d/centos.repo"
 
 # 기존 repo 파일 백업
 if [ -f "$REPO_PATH" ]; then
-    cp "$REPO_PATH" "${REPO_PATH}.bak.$(date +%Y%m%d)"
+    cp "$REPO_PATH" ".${REPO_PATH}.bak.$(date +%Y%m%d)"
     echo "기존 centos.repo 파일을 백업했습니다: ${REPO_PATH}.bak.$(date +%Y%m%d)"
 else
     echo "기존 centos.repo 파일이 없습니다. 새로 생성합니다."
