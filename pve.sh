@@ -164,7 +164,7 @@ EOF
 Types: deb
 URIs: https://http.krfoss.org/proxmox/debian/ceph-$ceph_version
 Suites: $codename
-Components: no-subscription
+Components: $CEPH_COMPONENTS
 Signed-By: $PVE_KEYRING_PATH
 EOF
     echo "✓ $CEPH_SOURCE_FILE 파일이 성공적으로 생성되었습니다."
