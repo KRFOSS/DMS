@@ -148,6 +148,12 @@ EOF
 # ROKFOSS Ceph 저장소
 EOF
 
+    # 2. Proxmox VE Ceph 저장소 파일 생성 (ceph.sources)
+    CEPH_COMPONENTS="no-subscription"
+    if [ "$IS_PVE_BETA" = true ]; then
+        CEPH_COMPONENTS="test"
+    fi
+
     # ceph_version이 quincy가 아닐 때만 해당 Ceph 리포지토리 추가
     if [ "$ceph_version" != "quincy" ]; then
         cat >> "$CEPH_SOURCE_FILE" << EOF
@@ -162,15 +168,9 @@ EOF
     # quincy, squid Ceph 리포지토리 추가
     cat >> "$CEPH_SOURCE_FILE" << EOF
 Types: deb
-URIs: https://http.krfoss.org/proxmox/debian/ceph-quincy
-Suites: $codename
-Components: no-subscription
-Signed-By: $PVE_KEYRING_PATH
-
-Types: deb
 URIs: https://http.krfoss.org/proxmox/debian/ceph-squid
 Suites: $codename
-Components: no-subscription
+Components: $CEPH_COMPONENTS
 Signed-By: $PVE_KEYRING_PATH
 EOF
     echo "✓ $CEPH_SOURCE_FILE 파일이 성공적으로 생성되었습니다."
