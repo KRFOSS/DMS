@@ -60,8 +60,11 @@ IS_PVE_BETA=false
 # pve-manager 버전 문자열에 '~'가 포함되어 있는지 정확히 확인합니다.
 # 'pve-manager/숫자.숫자.숫자~' 패턴을 찾습니다.
 if pveversion | grep -qE "pve-manager/[0-9]+\.[0-9]+\.[0-9]+~"; then
-    IS_PVE_BETA=true
-    echo "Proxmox VE 베타/테스트 버전이 감지되었습니다. pve-test 저장소를 사용합니다."
+    if [ $? -eq 0 ]; then
+        IS_PVE_BETA=true
+        echo "Proxmox VE 베타/테스트 버전이 감지되었습니다. pve-test 저장소를 사용합니다."
+    fi
+fi
 fi
 
 
