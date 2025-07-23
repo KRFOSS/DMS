@@ -3,8 +3,10 @@ set -e
 
 major_ver=$(awk -F= '/^VERSION_ID=/{gsub(/"/,"",$2); print $2}' /etc/os-release | cut -d. -f1)
 
-if [[ "$major_ver" -ge 9 ]]; then
+if [[ "$major_ver" -eq 9 ]]; then
     GPGKEY="/etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9"
+elif [[ "$major_ver" -eq 10 ]]; then
+    GPGKEY="/etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-10"
 else
     GPGKEY="/etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial"
 fi
