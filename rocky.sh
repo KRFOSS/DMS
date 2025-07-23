@@ -11,6 +11,12 @@ else
     GPGKEY="/etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial"
 fi
 
+# 기존 repo 파일 백업
+for f in /etc/yum.repos.d/*.repo; do
+    [ -e "$f" ] && cp "$f" ".${f}.bak.$(date +%Y%m%d)"
+    echo "기존 repo 파일을 백업했습니다: ${f}.bak.$(date +%Y%m%d)"
+done
+
 rm -f /etc/yum.repos.d/*.repo
 
 cat > /etc/yum.repos.d/rokfoss.repo <<EOF
