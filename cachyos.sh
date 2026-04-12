@@ -20,7 +20,7 @@ else
             
             case "$answer" in
                 [Yy]* )
-                    echo "Server = https://mirror.wane.kr/archlinux/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist
+                    echo "Server = https://http2.krfoss.org/archlinux/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist
                 ;;
                 [Nn]* )
                     echo "Arch Linux 미러리스트 파일은 변경되지 않았습니다."
@@ -28,13 +28,13 @@ else
             esac
 
             # Cachyos Mirrorlist
-            echo "Server = https://mirror.wane.kr/cachyos/repo/\$arch/\$repo" > /etc/pacman.d/cachyos-mirrorlist
+            echo "Server = https://http2.krfoss.org/cachyos/repo/\$arch/\$repo" > /etc/pacman.d/cachyos-mirrorlist
 
             # Cachyos V3 Mirrorlist
-            echo "Server = https://mirror.wane.kr/cachyos/repo/\$arch_v3/\$repo" > /etc/pacman.d/cachyos-v3-mirrorlist
+            echo "Server = https://http2.krfoss.org/cachyos/repo/\$arch_v3/\$repo" > /etc/pacman.d/cachyos-v3-mirrorlist
 
             # Cachyos V4 Mirrorlist
-            echo "Server = https://mirror.wane.kr/cachyos/repo/\$arch_v4/\$repo" > /etc/pacman.d/cachyos-v4-mirrorlist
+            echo "Server = https://http2.krfoss.org/cachyos/repo/\$arch_v4/\$repo" > /etc/pacman.d/cachyos-v4-mirrorlist
             
             # Disable systemd timer unit (cachyos-rate-mirrors.timer)
             systemctl disable cachyos-rate-mirrors.timer --now
