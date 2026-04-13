@@ -10,7 +10,10 @@ else
         if ls /etc/pacman.d/mirrorlist /etc/pacman.d/cachyos* &>/dev/null; then
             for file in "${BACKUP_FILES[@]}"; do
                 if [ -f "$file" ]; then
-                    cp "$file" ."$file.bak"
+                    dir=$(dirname "$file")
+                    base=$(basename "$file")
+
+                    cp "$file" "$dir/.${base}.bak"
                 fi
             done
 
@@ -47,8 +50,11 @@ else
 
             echo "================================================"
             echo " * 미러 변경이 완료되었습니다."
-            echo " * 미러 고정을 위해 cachyos-rate-mirrors 타이머 유닛이 비활성화되었으며, 다음 명령어로 다시 활성화할 수 있습니다:"
+            echo " * 미러 변경을 방지하기 위해 cachyos-rate-mirrors 타이머 유닛이 비활성화되었으며, 다음 명령어로 다시 활성화할 수 있습니다:"
             echo "   systemctl enable cachyos-rate-mirrors.timer --now"
+            echo ""
+            echo " * 서명이 올바르지 않다고 표시될 경우 'pacman -Sy'를 다시 실행하며 해결할 수 있습니다."
+            echo "   문제 발생이 지속될 경우 https://report.krfoss.org 에 오류를 제보해주세요."
             echo "================================================"
         else
             echo "미러리스트 파일이 /etc/pacman.d 디렉토리에 존재하지 않습니다."
