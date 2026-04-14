@@ -44,7 +44,20 @@ else
             # Disable systemd timer unit (cachyos-rate-mirrors.timer)
             systemctl disable cachyos-rate-mirrors.timer --now
 
-            if pacman -Scc --noconfirm &>/dev/null && pacman -Sy; then
+            printf "[권장] 패키지 파일 캐시를 모두 삭제할까요? (Yy/Nn): " > /dev/tty
+            read cleanCache < /dev/tty
+
+            case "$cleanCache" in
+                [Yy]* )
+                    pacman -Scc --noconfirm > /dev/null 2>&1
+                ;;
+                [Nn]* )
+                    echo "캐시를 정리하지 않았습니다."
+                ;;
+            esac
+
+
+            if pacman -Sy; then
                 echo "패키지 데이터베이스가 업데이트되었습니다."
             else
                 echo "패키지 데이터베이스 업데이트에 실패했습니다. 네트워크 및 미러 설정을 확인하세요."
