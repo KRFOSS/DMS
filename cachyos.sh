@@ -20,7 +20,8 @@ else
 
             echo "기존 미러리스트 파일이 /etc/pacman.d 디렉토리에 숨김 파일로 백업되었습니다."
             
-            read -p "Arch Linux 미러리스트 파일도 교체할까요? (Yy/Nn): " answer
+            printf "Arch Linux 미러리스트 파일도 교체할까요? (Yy/Nn): " > /dev/tty
+            read answer < /dev/tty
             
             case "$answer" in
                 [Yy]* )
