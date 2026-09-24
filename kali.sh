@@ -16,11 +16,14 @@ if grep -q '^ID=kali$' /etc/os-release; then
     USE_DEB822=false
 
     # Detect DEB822 Format
-    if [ -f /etc/apt/sources.list.d/kali.sources ] ||
-       { [[ "$VERSION_NUMBER" =~ ^[0-9]{4}$ && "$RELEASE_NUMBER" =~ ^[0-9]+$ ]] &&
-         { [ "$VERSION_NUMBER" -gt 2026 ] ||
-           { [ "$VERSION_NUMBER" -eq 2026 ] && [ "$RELEASE_NUMBER" -ge 2 ]; }; }; then
+    if [ -f /etc/apt/sources.list.d/kali.sources ]; then
         USE_DEB822=true
+    elif [[ "$VERSION_NUMBER" =~ ^[0-9]{4}$ && "$RELEASE_NUMBER" =~ ^[0-9]+$ ]]; then
+        if [ "$VERSION_NUMBER" -gt 2026 ]; then
+            USE_DEB822=true
+        elif [ "$VERSION_NUMBER" -eq 2026 ] && [ "$RELEASE_NUMBER" -ge 2 ]; then
+            USE_DEB822=true
+        fi
     fi
 
     # Override DEB822 Format
