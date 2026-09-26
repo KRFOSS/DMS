@@ -7,7 +7,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-if grep -q "Ubuntu" /etc/os-release; then
+if grep -qi "ubuntu" /etc/os-release; then
     USE_DEB822=false
     CODENAME=$(lsb_release -cs 2>/dev/null || grep -oP "VERSION_CODENAME=\K\w+" /etc/os-release)
 
