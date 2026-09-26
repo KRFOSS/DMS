@@ -7,7 +7,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-if grep -q '^ID=debian$' /etc/os-release; then
+if grep -qi 'debian' /etc/os-release; then
     . /etc/os-release
     CODENAME="${VERSION_CODENAME:-$(lsb_release -cs 2>/dev/null)}"
     VERSION_NUMBER="${VERSION_ID%%.*}"
