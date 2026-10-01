@@ -276,9 +276,9 @@ EOF
 
     if [[ "$ULTRAMARINE_CHANGED" == "true" ]]; then
         if dnf makecache --disablerepo='*' --enablerepo='ultramarine' >/dev/null 2>&1; then
-            echo "Ultramarine metadata GPG 검증: SUCCESS"
+            printf 'Ultramarine metadata GPG 검증: \033[92mSUCCESS\033[0m\n'
         else
-            echo "Ultramarine metadata GPG 검증: FAILED"
+            printf 'Ultramarine metadata GPG 검증: \033[91mFAILED\033[0m\n'
             METADATA_GPG_FAILED=true
         fi
     fi
@@ -293,9 +293,9 @@ EOF
         done
 
         if [[ "$TERRA_GPG_SUCCESS" == "true" ]]; then
-            echo "Terra metadata GPG 검증: SUCCESS"
+            printf 'Terra metadata GPG 검증: \033[92mSUCCESS\033[0m\n'
         else
-            echo "Terra metadata GPG 검증: FAILED"
+            printf 'Terra metadata GPG 검증: \033[91mFAILED\033[0m\n'
             METADATA_GPG_FAILED=true
         fi
     fi
