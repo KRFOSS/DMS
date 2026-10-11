@@ -19,7 +19,6 @@ if [[ "$ID" =~ ^(fedora|ultramarine|bazzite)$ ]]; then
   echo "감지된 배포판: $ID"
 
   if [[ "$ID" == "bazzite" ]]; then
-    # Bazzite의 저장소 활성화 상태, 우선순위 및 패키지 제외 설정을 유지합니다.
     for command in rpm dnf5 rpm-ostree; do
       if ! command -v "$command" >/dev/null 2>&1; then
         echo "Bazzite에 필요한 명령을 찾을 수 없습니다: $command"
@@ -30,7 +29,6 @@ if [[ "$ID" =~ ^(fedora|ultramarine|bazzite)$ ]]; then
     terra_repo_enabled() {
       local config
       config=$(dnf5 --dump-repo-config="$1") || return 1
-      # .repo 파일뿐 아니라 repos.override.d의 설정까지 반영한 상태입니다.
       awk '
         /^[[:space:]]*enabled[[:space:]]*=/ {
           count++
@@ -90,7 +88,6 @@ if [[ "$ID" =~ ^(fedora|ultramarine|bazzite)$ ]]; then
     for repo in "${TERRA_REPOS[@]}"; do
       repo_file="$REPO_DIR/$repo.repo"
       temp_file=$(mktemp) || exit 1
-      # metalink/mirrorlist가 baseurl보다 우선하지 않도록 함께 제거합니다.
       if ! awk -v repo="$repo" -v mirror="$FYRA_DMS_URL" -v activate="$activate" '
         /^[[:space:]]*\[/ {
           section=$0
@@ -120,7 +117,6 @@ if [[ "$ID" =~ ^(fedora|ultramarine|bazzite)$ ]]; then
       fi
       rm -f "$temp_file"
       if [[ "$activate" == "true" ]]; then
-        # rpm-ostree용 .repo 설정과 DNF5의 기존 override를 함께 활성화합니다.
         if ! dnf5 config-manager setopt --create-missing-dir "$repo.enabled=1"; then
           echo "$repo 저장소 활성화에 실패했습니다."
           exit 1
@@ -134,8 +130,6 @@ if [[ "$ID" =~ ^(fedora|ultramarine|bazzite)$ ]]; then
       echo "$repo 저장소가 변경되었습니다."
     done
 
-    # 비활성 저장소도 검증 명령에서만 활성화하여 모든 변경 대상의 서명을 확인합니다.
-    # 새 메타데이터를 받고, 접근 불가나 서명 오류를 성공으로 처리하지 않습니다.
     TERRA_GPG_SUCCESS=true
     for repo in "${TERRA_REPOS[@]}"; do
       if ! dnf5 --refresh --repo="$repo" \
@@ -153,7 +147,6 @@ if [[ "$ID" =~ ^(fedora|ultramarine|bazzite)$ ]]; then
       exit 1
     fi
 
-    # Atomic 호스트가 실제 사용하는 rpm-ostree 메타데이터 캐시를 처리합니다.
     echo "rpm-ostree 저장소 메타데이터 캐시를 삭제합니다."
     if ! rpm-ostree cleanup -m; then
       echo "rpm-ostree 저장소 메타데이터 캐시 삭제에 실패했습니다."
