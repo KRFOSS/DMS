@@ -15,8 +15,159 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-if [[ "$ID" =~ ^(fedora|ultramarine)$ ]]; then
+if [[ "$ID" =~ ^(fedora|ultramarine|bazzite)$ ]]; then
   echo "감지된 배포판: $ID"
+
+  if [[ "$ID" == "bazzite" ]]; then
+    # Bazzite의 저장소 활성화 상태, 우선순위 및 패키지 제외 설정을 유지합니다.
+    for command in rpm dnf5 rpm-ostree; do
+      if ! command -v "$command" >/dev/null 2>&1; then
+        echo "Bazzite에 필요한 명령을 찾을 수 없습니다: $command"
+        exit 1
+      fi
+    done
+
+    terra_repo_enabled() {
+      local config
+      config=$(dnf5 --dump-repo-config="$1") || return 1
+      # .repo 파일뿐 아니라 repos.override.d의 설정까지 반영한 상태입니다.
+      awk '
+        /^[[:space:]]*enabled[[:space:]]*=/ {
+          count++
+          value=$0
+          sub(/^[^=]*=[[:space:]]*/, "", value)
+          sub(/[[:space:]]*$/, "", value)
+        }
+        END {
+          if (count != 1 || value !~ /^(0|1)$/) exit 1
+          print value
+        }
+      ' <<<"$config"
+    }
+
+    TERRA_DISABLED=false
+    for suffix in "" -extras -mesa -multimedia -nvidia; do
+      repo="terra$suffix"
+      repo_file="$REPO_DIR/$repo.repo"
+      if ! rpm -q "terra-release$suffix" >/dev/null 2>&1 ||
+        [[ ! -f "$repo_file" ]]; then
+        continue
+      fi
+
+      if ! enabled=$(terra_repo_enabled "$repo"); then
+        echo "$repo 저장소 활성화 상태 확인에 실패했습니다."
+        exit 1
+      fi
+      if [[ "$enabled" == "0" ]]; then
+        TERRA_DISABLED=true
+      fi
+      TERRA_REPOS+=("$repo")
+    done
+
+    if [[ "${#TERRA_REPOS[@]}" -eq 0 ]]; then
+      echo "변경할 Terra 저장소가 없습니다."
+      exit 0
+    fi
+
+    activate=false
+    if [[ "$TERRA_DISABLED" == "true" ]]; then
+      printf -v repo_list '%s, ' "${TERRA_REPOS[@]}"
+      repo_list=${repo_list%, }
+      while true; do
+        answer=""
+        if ! read -r -p "Terra 저장소($repo_list)를 활성화하시겠습니까? [y/N] " answer; then
+          echo
+          break
+        fi
+        case "$answer" in
+          y|Y|yes|YES) activate=true; break ;;
+          n|N|no|NO|"") break ;;
+          *) echo "y 또는 n을 입력하세요." ;;
+        esac
+      done
+    fi
+
+    for repo in "${TERRA_REPOS[@]}"; do
+      repo_file="$REPO_DIR/$repo.repo"
+      temp_file=$(mktemp) || exit 1
+      # metalink/mirrorlist가 baseurl보다 우선하지 않도록 함께 제거합니다.
+      if ! awk -v repo="$repo" -v mirror="$FYRA_DMS_URL" -v activate="$activate" '
+        /^[[:space:]]*\[/ {
+          section=$0
+          sub(/^[[:space:]]*\[/, "", section)
+          sub(/\].*$/, "", section)
+          target=(section == repo || section == repo "-source")
+          if (section == repo) found=1
+          print
+          if (section == repo && activate == "true") print "enabled=1"
+          if (target) {
+            suffix=section
+            sub(/^terra/, "", suffix)
+            print "baseurl=" mirror "/terra$releasever" suffix
+          }
+          next
+        }
+        target && /^[[:space:]]*(baseurl|metalink|mirrorlist)[[:space:]]*=/ { next }
+        section == repo && activate == "true" && /^[[:space:]]*enabled[[:space:]]*=/ { next }
+        { print }
+        END { if (!found) exit 1 }
+      ' "$repo_file" >"$temp_file" ||
+        ! cp "$repo_file" "$repo_file.bak" ||
+        ! cat "$temp_file" >"$repo_file"; then
+        rm -f "$temp_file"
+        echo "$repo 저장소 변경에 실패했습니다."
+        exit 1
+      fi
+      rm -f "$temp_file"
+      if [[ "$activate" == "true" ]]; then
+        # rpm-ostree용 .repo 설정과 DNF5의 기존 override를 함께 활성화합니다.
+        if ! dnf5 config-manager setopt --create-missing-dir "$repo.enabled=1"; then
+          echo "$repo 저장소 활성화에 실패했습니다."
+          exit 1
+        fi
+        if ! enabled=$(terra_repo_enabled "$repo") || [[ "$enabled" != "1" ]]; then
+          echo "$repo 저장소 활성화 확인에 실패했습니다."
+          exit 1
+        fi
+        echo "$repo 저장소가 활성화되었습니다."
+      fi
+      echo "$repo 저장소가 변경되었습니다."
+    done
+
+    # 비활성 저장소도 검증 명령에서만 활성화하여 모든 변경 대상의 서명을 확인합니다.
+    # 새 메타데이터를 받고, 접근 불가나 서명 오류를 성공으로 처리하지 않습니다.
+    TERRA_GPG_SUCCESS=true
+    for repo in "${TERRA_REPOS[@]}"; do
+      if ! dnf5 --refresh --repo="$repo" \
+        --setopt="$repo.skip_if_unavailable=false" \
+        --setopt="$repo.repo_gpgcheck=1" makecache -y >/dev/null 2>&1; then
+        TERRA_GPG_SUCCESS=false
+      fi
+    done
+
+    if [[ "$TERRA_GPG_SUCCESS" == "true" ]]; then
+      printf 'Terra metadata GPG 검증: \033[92mSUCCESS\033[0m\n'
+    else
+      printf 'Terra metadata GPG 검증: \033[91mFAILED\033[0m\n'
+      echo "Fyra Labs 저장소 metadata GPG 검증에 실패했습니다."
+      exit 1
+    fi
+
+    # Atomic 호스트가 실제 사용하는 rpm-ostree 메타데이터 캐시를 처리합니다.
+    echo "rpm-ostree 저장소 메타데이터 캐시를 삭제합니다."
+    if ! rpm-ostree cleanup -m; then
+      echo "rpm-ostree 저장소 메타데이터 캐시 삭제에 실패했습니다."
+      exit 1
+    fi
+
+    echo "rpm-ostree 저장소 메타데이터를 갱신합니다."
+    if ! rpm-ostree refresh-md --force; then
+      echo "rpm-ostree 저장소 메타데이터 갱신에 실패했습니다."
+      exit 1
+    fi
+    echo "Fyra Labs 저장소가 ROKFOSS 분산미러로 변경되었습니다."
+    exit 0
+  fi
 
   if command -v lspci >/dev/null 2>&1 &&
     lspci -nn 2>/dev/null | awk '
@@ -315,6 +466,6 @@ EOF
   fi
 
 else
-  echo "올바르지 않은 배포판입니다. 이 스크립트는 Fedora 또는 Ultramarine에서만 사용할 수 있습니다."
+  echo "올바르지 않은 배포판입니다. 이 스크립트는 Fedora, Ultramarine 또는 Bazzite에서만 사용할 수 있습니다."
   exit 1
 fi
